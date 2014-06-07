@@ -30,7 +30,7 @@ To install for development purposes:
 	'''  
 8) Start the application running with  
 	'''  
-	$ python chatta.py  
+	$ python halon.py  
 	'''  
 9) Access your development site at 127.0.0.1:5000  
   
