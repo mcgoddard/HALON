@@ -1,7 +1,7 @@
-chatta
+HALON
 ======
 
-A quick and simple chat-room app built in Python using Flask and Sqlalchemy.
+A simple browser based game developed in Python using Flask, SQLAlchemy and using JQuery on the client side.
 
 ## Installation
 
@@ -37,4 +37,4 @@ To install for development purposes:
   
 ### Deployment
 1) Steps 1-7 of the development installation still apply  
-2) Follow steps at http://flask.pocoo.org/docs/deploying to get your "chatta" onto the webserver of your choice 
+2) Follow steps at http://flask.pocoo.org/docs/deploying to get your "HALON" onto the webserver of your choice 
