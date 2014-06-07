@@ -25,7 +25,7 @@ To install for development purposes:
 5) Create empty database for project  
 6) Set database configuration in "database.py"  
 7) Run: 
-	```python  
+	```  
 	from database import init_db  
 	init_db()  
 	```  
