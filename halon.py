@@ -28,6 +28,29 @@ def index():
             return render_template('choose_character.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), characters = characters)
     return render_template('index.html')
 
+@app.route('move')
+def move():
+    if 'username' in session:
+        thisuser = User.query.filter(User.username == session['username']).first()
+        if thisuser != None:
+            direction = request.form['direction']
+            if direction > 0 && direction < 5:
+                if thisuser.direction == direction:
+                    thisuser.moving = True
+                    if direction == 1:
+                        thisuser.y += thisuser.character.speed
+                    elif direction == 2:
+                        thisuser.x -= thisuser.character.speed
+                    elif direction == 3:
+                        thisuser.x += thisuser.character.speed
+                    elif direction == 4:
+                        thisuser.y -= thisuser.character.speed
+                else:
+                    thisuser.moving = False
+                    thisuser.direction = direction
+                db_session.commit()
+    return ''
+
 @app.route('change_character', methods=['GET', 'POST'])
 def change_character():
     if 'username' in session:
@@ -36,7 +59,7 @@ def change_character():
             thisuser.character = None
             db_session.commit()
         elif request.method == 'POST':
-            character_id = request.args.get('character_id','')
+            character_id = request.form['character_id']
             character = Character.query.filter(Character.id == character_id).first()
             if character != None:
                 thisuser.character = character
