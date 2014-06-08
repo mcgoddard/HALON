@@ -1,29 +1,26 @@
-{% include "header.html" %}
-<div class="row-fluid">
-	<div class="col-md-6">
-		<h3>Chat:</h3>
-		<div id="messages-box">
-			{% for message in messages %}
-				<p class="chat"><strong>{{ message.user.username }}:</strong> {{ message.text }}</p>
-				<p class="timestamp"><i>{{ message.created_at }}</i></p>
-			{% endfor %}
-		</div>
-		<div class="input-group">
-   			<input type="text" id="message-field" class="form-control" placeholder="Message">
-		    <div class="input-group-btn">
-		      	<button type="submit" class="btn btn-primary" onClick="sendMessage()">Send</button>
-		    </div>
-	  	</div>  
+<div class="row">
+	<h3>Chat:</h3>
+	<div id="messages-box">
+		{% for message in messages %}
+			<p class="chat"><strong>{{ message.user.username }}:</strong> {{ message.text }}</p>
+			<p class="timestamp"><i>{{ message.created_at }}</i></p>
+		{% endfor %}
 	</div>
-	<div class="col-md-6">
-		<h3>Active Users:</h3>
-		<div id="users-box">
-			{% for user in users %}
-				<p class="user">{{ user.username }}</p>
-			{% endfor %}
-		</div>
+	<div class="input-group">
+			<input type="text" id="message-field" class="form-control" placeholder="Message">
+	    <div class="input-group-btn">
+	      	<button type="submit" class="btn btn-primary" onClick="sendMessage()">Send</button>
+	    </div>
+  	</div>  
+</div>
+<div class="row">
+	<h3>Active Users:</h3>
+	<div id="users-box">
+		{% for user in users %}
+			<p class="user">{{ user.username }}</p>
+		{% endfor %}
 	</div>
-</row>
+</div>
 <script type="text/javascript">
 	var last_update = "{{ now }}";
 	var last_result;

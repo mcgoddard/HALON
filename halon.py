@@ -16,13 +16,39 @@ def shutdown_session(exception=None):
 def index():
     if 'username' in session:
         thisuser = User.query.filter(User.username == session['username']).first()
+        messages = Message.query.all()
         now = datetime.datetime.now()
         thisuser.active_until = now + datetime.timedelta(seconds = 30)
         db_session.commit()
-        messages = Message.query.all()
         active_users = User.query.filter(User.active_until > datetime.datetime.now())
-        return render_template('chat.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        if thisuser.character != None:
+            return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        else:
+            characters = Character.query.all()
+            return render_template('choose_character.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), characters = characters)
     return render_template('index.html')
+
+@app.route('change_character', methods=['GET', 'POST'])
+def change_character():
+    if 'username' in session:
+        thisuser = User.query.filter(User.username == session['username']).first()
+        if request.method == 'GET':
+            thisuser.character = None
+            db_session.commit()
+        elif request.method == 'POST':
+            character_id = request.args.get('character_id','')
+            character = Character.query.filter(Character.id == character_id).first()
+            if character != None:
+                thisuser.character = character
+                thisuser.x = 150
+                thisuser.y = 150
+                thisuser.health = character.max_health
+                thisuser.direction = 1
+                thisuser.moving = False
+                db_session.commit()
+            else:
+                flash('Select a valid character!','danger')
+    return redirect(url_for('index'))
 
 @app.route('/update')
 def update():

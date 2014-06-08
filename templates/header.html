@@ -21,6 +21,7 @@
 	    	</div>
 	    	<ul class="nav navbar-nav navbar-right">
 	    		{% if name %}
+	    			<li><a href="{{ url_for('change_character') }}">Change Character</a></li>
 	        		<li><a href="{{ url_for('logout') }}">Log Out</a></li>
 	        	{% else %}
 		        	<li><a href="{{ url_for('login') }}">Log In</a></li>
