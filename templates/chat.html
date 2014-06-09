@@ -52,7 +52,7 @@
 		    }
 		    var new_active_users = "";
 		    for (i = 0; i < result['active_users'].length; i++) {
-		    	new_active_users += "<p class='user'>"+result['active_users'][i]+"</p>";
+		    	new_active_users += "<p class='user'>"+result['active_users'][i]['username']+"</p>";
 		    }
 		    $('#users-box').empty().append(new_active_users);
 		    if (moveDown) {

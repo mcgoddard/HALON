@@ -45,18 +45,31 @@ def move():
     if 'username' in session:
         thisuser = User.query.filter(User.username == session['username']).first()
         if thisuser != None:
-            direction = request.form['direction']
+            direction = request.args.get('direction')
             if direction > 0 and direction < 5:
                 if thisuser.direction == direction:
                     thisuser.moving = True
                     if direction == 1:
-                        thisuser.y += thisuser.character.speed
+                        newY = thisuser.y + thisuser.character.speed
+                        tile = Tile.query.filter(int((newY + 16)/100) == Tile.y, int(thisuser.x/100) == Tile.x).first()
+                        if int((newY + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                            thisuser.y = newY
                     elif direction == 2:
-                        thisuser.x -= thisuser.character.speed
+                        newX = thisuser.x - thisuser.character.speed
+                        tile = Tile.query.filter(int((newX - 16)/100) == Tile.x, int(thisuser.y/100) == Tile.y).first()
+                        if int((newX - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                            thisuser.x = newX
                     elif direction == 3:
+                        newX = thisuser.x + thisuser.character.speed
+                        tile = Tile.query.filter(int((newX + 16)/100) == Tile.x, int(thisuser.y/100) == Tile.y).first()
+                        if int((newX + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                            thisuser.x = newX
                         thisuser.x += thisuser.character.speed
                     elif direction == 4:
-                        thisuser.y -= thisuser.character.speed
+                        newY = thisuser.y - thisuser.character.speed
+                        tile = Tile.query.filter(int((newY - 16)/100) == Tile.y, int(thisuser.x/100) == Tile.x).first()
+                        if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                            thisuser.y = newY
                 else:
                     thisuser.moving = False
                     thisuser.direction = direction
@@ -103,8 +116,8 @@ def update():
                 active_users = User.query.filter(User.active_until > datetime.datetime.now())
                 parsed_active_users = []
                 for user in active_users:
-                    parsed_active_users.append(user.username)
-                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))])
+                    parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
+                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", thisuser)])
                 return json.dumps(result)
             except ValueError:
                 return ""
