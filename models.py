@@ -26,10 +26,10 @@ class User(Base):
         return '<User %r>' % (self.username)
 
 class Character(Base):
-	__tablename__ = 'characters'
+    __tablename__ = 'characters'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True)
-    description = Column(String(50))
+    description = Column(String(144))
     max_health = Column(Integer)
     speed = Column(Integer)
     decode_time = Column(Integer)

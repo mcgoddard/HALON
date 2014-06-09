@@ -48,7 +48,7 @@
 		    	var message = result['new_messages'][i];
 		    	$('#messages-box').append("<p class='chat'><strong>"+message['username']+":</strong> "+message['text']+"</p>"+
 					"<p class='timestamp'><i>"+message['created_at']+"</i></p>");
-			document.title = "New Message! - CHATTA";
+				document.title = "New Message! - HALON";
 		    }
 		    var new_active_users = "";
 		    for (i = 0; i < result['active_users'].length; i++) {
@@ -97,7 +97,7 @@
 	    });
 
 	$(document).one('click',function() {
-	   setInterval(function() { if (window_focus) { document.title = "CHATTA" } }, 1000);
+	   setInterval(function() { if (window_focus) { document.title = "HALON" } }, 1000);
 	});
 </script>
 {% include "footer.html" %}

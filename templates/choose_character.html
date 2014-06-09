@@ -1,0 +1,70 @@
+{% include "header.html" %}
+<div id="game-row" class="row-fluid">
+	<div class="col-md-10">
+		{% for character in characters %}
+			<div id="character-{{ character.id }}" class="character-chooser">
+				<img src="{{ url_for('static', filename='img/sprite-'~character.id~'-1s.gif') }}" alt="{{ character.name }} - portrait" />
+				<p class="character-name">{{ character.name }}</p>
+				<p class="character-description">{{ character.description }}</p>
+			</div>
+		{% endfor %}
+		<ul class="pager">
+		  <li><a href="#" onClick="previous()">Previous</a></li>
+		  <li><a href="#" onClick="next()">Next</a></li>
+		</ul>
+		<form id="start-game-form" action="{{ url_for('change_character') }}" method="POST">
+			<input type="hidden" name="character_id" id="character-input" value="1" />
+			<input type="submit" value="Join Game" class="btn btn-primary" />
+		</form>
+	</div>
+	<div class="col-md-2">
+		{% include "chat.html" %}
+	</div>
+</row>
+<script type="text/javascript">
+	var character_id = 1;
+	var character_max = {{ characters|length }};
+
+	$( document ).ready(function() {
+		for (i = 2; i <= character_max; i++) {
+			$('#character-'+i).hide();
+		}
+    	display_character();
+	});
+
+	function hide_character() {
+		$('#character-'+character_id).hide();
+	}
+
+	function display_character() {
+		$('#character-'+character_id).show();
+		$('#character-input').val(character_id);
+	}
+
+	function next() {
+		hide_character();
+		if (character_id+1 > character_max) {
+			character_id = 1;
+		}
+		else {
+			character_id += 1;
+		}
+		display_character();
+	}
+
+	function previous() {
+		hide_character();
+		if (character_id-1 < 1) {
+			character_id = character_max - 1;
+		}
+		else {
+			character_id -= 1;
+		}
+		display_character();
+	}
+
+	function start_game() {
+
+	}
+</script>
+{% include "footer.html" %}

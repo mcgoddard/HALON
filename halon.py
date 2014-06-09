@@ -4,7 +4,7 @@ import database, hashlib, models, time, datetime, json
 
 from database import db_session
 
-from models import User, Message
+from models import User, Message, Tile, Character
 
 app = Flask(__name__)
 
@@ -24,17 +24,29 @@ def index():
         if thisuser.character != None:
             return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            characters = Character.query.all()
-            return render_template('choose_character.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), characters = characters)
+            hal = Character.query.filter(Character.name == 'HAL').first()
+            if User.query.filter(User.character == hal).first() != None:
+                characters = Character.query.filter(Character.name != 'HAL').all()
+                return render_template('choose_character.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), characters = characters)
+            else:
+                character = Character.query.filter(Character.name == 'HAL').first()
+                thisuser.character = character
+                thisuser.x = 50
+                thisuser.y = 50
+                thisuser.health = character.max_health
+                thisuser.direction = 1
+                thisuser.moving = False
+                db_session.commit()
+                return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return render_template('index.html')
 
-@app.route('move')
+@app.route('/move')
 def move():
     if 'username' in session:
         thisuser = User.query.filter(User.username == session['username']).first()
         if thisuser != None:
             direction = request.form['direction']
-            if direction > 0 && direction < 5:
+            if direction > 0 and direction < 5:
                 if thisuser.direction == direction:
                     thisuser.moving = True
                     if direction == 1:
@@ -51,7 +63,7 @@ def move():
                 db_session.commit()
     return ''
 
-@app.route('change_character', methods=['GET', 'POST'])
+@app.route('/change_character', methods=['GET', 'POST'])
 def change_character():
     if 'username' in session:
         thisuser = User.query.filter(User.username == session['username']).first()
@@ -61,7 +73,7 @@ def change_character():
         elif request.method == 'POST':
             character_id = request.form['character_id']
             character = Character.query.filter(Character.id == character_id).first()
-            if character != None:
+            if character != None and character.name != 'HAL':
                 thisuser.character = character
                 thisuser.x = 150
                 thisuser.y = 150

@@ -6,15 +6,19 @@
 #messages-box {
 	width: 100%;
 	height: 50%;
-	max-height: 50%;
+	max-height: 250px;
 	overflow-y: scroll;
 }
 
 #users-box {
 	width: 100%;
 	height: 50%;
-	max-height: 50%;
+	max-height: 250px;
 	overflow-y: scroll;
+}
+
+#start-game-form {
+	text-align: center;
 }
 
 .timestamp {
@@ -27,4 +31,11 @@
 
 .input-group {
 	margin-bottom: 5px;
+}
+
+.character-chooser {
+	width: 250px;
+	text-align: center;
+	margin: auto;
+	display: block;
 }
