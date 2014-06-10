@@ -45,7 +45,7 @@ def move():
     if 'username' in session:
         thisuser = User.query.filter(User.username == session['username']).first()
         if thisuser != None:
-            direction = request.args.get('direction')
+            direction = int(request.args.get('direction'))
             if direction > 0 and direction < 5:
                 if thisuser.direction == direction:
                     thisuser.moving = True
@@ -74,7 +74,10 @@ def move():
                     thisuser.moving = False
                     thisuser.direction = direction
                 db_session.commit()
-    return ''
+                return 'completed'
+            return 'direction not detected'
+        return 'no user'
+    return 'not logged in'
 
 @app.route('/change_character', methods=['GET', 'POST'])
 def change_character():
@@ -117,7 +120,8 @@ def update():
                 parsed_active_users = []
                 for user in active_users:
                     parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
-                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", thisuser)])
+                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id)])
+                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser)])
                 return json.dumps(result)
             except ValueError:
                 return ""
