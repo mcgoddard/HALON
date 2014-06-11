@@ -59,6 +59,10 @@
 		    	$('#messages-box').scrollTop(999999);
 		    }
 		    last_update = result['last_updated'];
+		    // Update HUD and game if playing
+		    if (typeof(playing) != "undefined" && playing) {
+		    	update_game(result);
+		    }
 		  },
 		  error: function(xhr, textStatus, errorThrown){
 		  	if(!$('#connection-flash')) {

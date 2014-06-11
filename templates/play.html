@@ -1,10 +1,30 @@
 {% include "header.html" %}
 <div id="game-row" class="row-fluid">
 	<div class="col-md-10">
-		
+		<div id="hud-wrapper">
+			<div id="hud" class="hud-{{thisuser.character_id}}">
+			</div>
+		</div>
+		<div id="render-window">
+		</div>
 	</div>
 	<div class="col-md-2">
+		<script type="text/javascript">var playing = true</script>
 		{% include "chat.html" %}
 	</div>
 </row>
+<script type="text/javascript">
+function update_game(result) {
+	// Update HUD
+	$('#hud').width(Math.ceil((result['thisuser']['health']/(result['thisuser']['max_health']*1.0))*700));
+	// Clear game window
+	$('#render-window').empty();
+	// Render character
+	s = "";
+	if (!result['thisuser']['moving']) {
+		s = "s";
+	}
+	$('#render-window').append("<img src='{{ url_for('static', filename='img/sprite-') }}"+result['thisuser']['character_id']+"-"+result['thisuser']['direction']+s+".gif' alt='player-character' class='player-character' />");
+}
+</script>
 {% include "footer.html" %}

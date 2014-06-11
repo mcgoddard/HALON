@@ -21,6 +21,33 @@
 	text-align: center;
 }
 
+
+#render-window {
+	width: 700px;
+	height: 500px;
+	margin: auto;
+	background-color: #000;
+}
+
+#hud-wrapper {
+	width: 700px;
+	height: 30px;
+	margin: auto;
+	background-color: #999;
+}
+
+#hud {
+	height: 30px;
+}
+
+.hud-1, .hud-2, .hud-3, .hud-4, .hud-5 {
+	background-color: #F00;
+}
+
+.hud-6 {
+	background-color: #00F;
+}
+
 .timestamp {
 	font-size: 80%;
 }
@@ -38,4 +65,10 @@
 	text-align: center;
 	margin: auto;
 	display: block;
+}
+
+.player-character {
+	position: relative;
+	top: 225px;
+	left: 334px;
 }

@@ -22,7 +22,7 @@ def index():
         db_session.commit()
         active_users = User.query.filter(User.active_until > datetime.datetime.now())
         if thisuser.character != None:
-            return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), thisuser = thisuser)
         else:
             hal = Character.query.filter(Character.name == 'HAL').first()
             if User.query.filter(User.character == hal).first() != None:
@@ -120,8 +120,12 @@ def update():
                 parsed_active_users = []
                 for user in active_users:
                     parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
-                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id)])
-                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser)])
+                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health)])
+                tiles = Tile.query.all()
+                parsed_tiles = []
+                for tile in tiles:
+                    parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
+                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser), ("tiles", parsed_tiles)])
                 return json.dumps(result)
             except ValueError:
                 return ""
