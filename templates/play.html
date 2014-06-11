@@ -20,7 +20,7 @@ function update_game(result) {
 	// Clear game window
 	$('#render-window').empty();
 	// Render tiles
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < result['tiles'].length; i++) {
 		tile = result['tiles'][i];
 		offsetX = (tile['x']*100)-result['thisuser']['x'];
 		offsetY = (tile['y']*100)-result['thisuser']['y'];

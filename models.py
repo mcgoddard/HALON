@@ -53,6 +53,7 @@ class Tile(Base):
     y = Column(Integer)
     tile_type = Column(Integer)
     status = Column(Integer)
+    next_change = Column(DateTime)
 
     def __init__(self, x, y, tile_type, status):
         self.x = x

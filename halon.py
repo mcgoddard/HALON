@@ -40,6 +40,38 @@ def index():
                 return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return render_template('index.html')
 
+@app.route('/interact')
+def interact():
+    if 'username' in session:
+        thisuser = User.query.filter(User.username == session['username']).first()
+        if thisuser != None:
+            interactionX = -1;
+            interactionY = -1;
+            if thisuser.direction == 1:
+                interactionX = int(thisuser.x/100)
+                interactionY = int((thisuser.y+20)/100)
+            elif thisuser.direction == 2:
+                interactionX = int((thisuser.x-20)/100)
+                interactionY = int(thisuser.y/100)
+            elif thisuser.direction == 3:
+                interactionX = int((thisuser.x+20)/100)
+                interactionY = int(thisuser.y/100)
+            elif thisuser.direction == 4:
+                interactionX = int(thisuser.x/100)
+                interactionY = int((thisuser.y-20)/100)
+            else:
+                return 'direction error'
+            tile = Tile.query.filter(Tile.x == interactionX, Tile.y == interactionY).first()
+            if tile != None:
+                now = datetime.datetime.now()
+                tile.next_change = now + datetime.timedelta(seconds = thisuser.character.decode_time)
+                db_session.commit()
+                return 'completed'
+            else:
+                return 'tile not found'
+        return 'no user'
+    return 'not logged in'
+
 @app.route('/move')
 def move():
     if 'username' in session:
@@ -49,27 +81,6 @@ def move():
             if direction > 0 and direction < 5:
                 if thisuser.direction == direction:
                     thisuser.moving = True
-                    if direction == 1:
-                        newY = thisuser.y + thisuser.character.speed
-                        tile = Tile.query.filter(int((newY + 16)/100) == Tile.y, int(thisuser.x/100) == Tile.x).first()
-                        if int((newY + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
-                            thisuser.y = newY
-                    elif direction == 2:
-                        newX = thisuser.x - thisuser.character.speed
-                        tile = Tile.query.filter(int((newX - 16)/100) == Tile.x, int(thisuser.y/100) == Tile.y).first()
-                        if int((newX - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
-                            thisuser.x = newX
-                    elif direction == 3:
-                        newX = thisuser.x + thisuser.character.speed
-                        tile = Tile.query.filter(int((newX + 16)/100) == Tile.x, int(thisuser.y/100) == Tile.y).first()
-                        if int((newX + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
-                            thisuser.x = newX
-                        thisuser.x += thisuser.character.speed
-                    elif direction == 4:
-                        newY = thisuser.y - thisuser.character.speed
-                        tile = Tile.query.filter(int((newY - 16)/100) == Tile.y, int(thisuser.x/100) == Tile.x).first()
-                        if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
-                            thisuser.y = newY
                 else:
                     thisuser.moving = False
                     thisuser.direction = direction
@@ -100,6 +111,43 @@ def change_character():
             else:
                 flash('Select a valid character!','danger')
     return redirect(url_for('index'))
+
+def update_frame():
+    users = User.query.all()
+    for user in users:
+        if user.moving:
+            if user.direction == 1:
+                newY = user.y + user.character.speed
+                tile = Tile.query.filter(int((newY + 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
+                if int((newY + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                    user.y = newY
+            elif user.direction == 2:
+                newX = user.x - user.character.speed
+                tile = Tile.query.filter(int((newX - 16)/100) == Tile.x, int(user.y/100) == Tile.y).first()
+                if int((newX - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                    user.x = newX
+            elif user.direction == 3:
+                newX = user.x + user.character.speed
+                tile = Tile.query.filter(int((newX + 16)/100) == Tile.x, int(user.y/100) == Tile.y).first()
+                if int((newX + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                    user.x = newX
+                user.x += user.character.speed
+            elif user.direction == 4:
+                newY = user.y - user.character.speed
+                tile = Tile.query.filter(int((newY - 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
+                if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                    user.y = newY
+            db_session.commit()
+    tiles = Tile.query.all()
+    for tile in tiles:
+        if tile.next_change != None:
+            if tile.next_change < datetime.datetime.now():
+                tile.next_change = None
+                if tile.status == 0:
+                    tile.status = 1
+                else:
+                    tile.status = 0
+                db_session.commit()
 
 @app.route('/update')
 def update():
