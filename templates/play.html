@@ -19,6 +19,18 @@ function update_game(result) {
 	$('#hud').width(Math.ceil((result['thisuser']['health']/(result['thisuser']['max_health']*1.0))*700));
 	// Clear game window
 	$('#render-window').empty();
+	// Render tiles
+	for (i = 0; i < 1; i++) {
+		tile = result['tiles'][i];
+		offsetX = (tile['x']*100)-result['thisuser']['x'];
+		offsetY = (tile['y']*100)-result['thisuser']['y'];
+		renderX = offsetX + 334;
+		renderY = offsetY + 225;
+		// Only render if it will actually appear on screen
+		if (renderX > -100 && renderX < 700 && renderY > -100 && renderY < 500) {
+			$('#render-window').append("<img src='{{ url_for('static', filename='img/tile-') }}"+tile['tile_type']+"-"+tile['status']+".gif' alt='tile' class='tile' style='position:absolute;top:"+renderY+"px;left:"+renderX+"px;'/>");
+		} 
+	}
 	// Render character
 	s = "";
 	if (!result['thisuser']['moving']) {
