@@ -37,7 +37,7 @@ def index():
                 thisuser.direction = 1
                 thisuser.moving = False
                 db_session.commit()
-                return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                return render_template('play.html', thisuser = thisuser, name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return render_template('index.html')
 
 @app.route('/interact')
@@ -168,7 +168,7 @@ def update():
                 parsed_active_users = []
                 for user in active_users:
                     parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
-                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health)])
+                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
                 tiles = Tile.query.all()
                 parsed_tiles = []
                 for tile in tiles:

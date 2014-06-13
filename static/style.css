@@ -28,6 +28,7 @@
 	margin: auto;
 	background-color: #000;
 	overflow: hidden;
+	position: relative;
 }
 
 #hud-wrapper {
@@ -72,4 +73,8 @@
 	position: absolute;
 	top: 225px;
 	left: 334px;
+}
+
+.tile {
+	position:absolute;
 }

@@ -24,11 +24,11 @@ function update_game(result) {
 		tile = result['tiles'][i];
 		offsetX = (tile['x']*100)-result['thisuser']['x'];
 		offsetY = (tile['y']*100)-result['thisuser']['y'];
-		renderX = offsetX + 334;
-		renderY = offsetY + 225;
+		renderX = offsetX + 384;
+		renderY = offsetY + 275;
 		// Only render if it will actually appear on screen
 		if (renderX > -100 && renderX < 700 && renderY > -100 && renderY < 500) {
-			$('#render-window').append("<img src='{{ url_for('static', filename='img/tile-') }}"+tile['tile_type']+"-"+tile['status']+".gif' alt='tile' class='tile' style='position:absolute;top:"+renderY+"px;left:"+renderX+"px;'/>");
+			$('#render-window').append("<img src='{{ url_for('static', filename='img/tile-') }}"+tile['tile_type']+"-"+tile['status']+".gif' alt='tile' class='tile' style='top:"+renderY+"px;left:"+renderX+"px;'/>");
 		} 
 	}
 	// Render character
