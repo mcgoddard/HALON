@@ -31,7 +31,11 @@ function update_game(result) {
 			$('#render-window').append("<img src='{{ url_for('static', filename='img/tile-') }}"+tile['tile_type']+"-"+tile['status']+".gif' alt='tile' class='tile' style='top:"+renderY+"px;left:"+renderX+"px;'/>");
 		} 
 	}
-	// Render character
+	// Render other players
+	for (i = 0; i < result['active_users'].length; i++) {
+		
+	}
+	// Render player
 	s = "";
 	if (!result['thisuser']['moving']) {
 		s = "s";

@@ -8,6 +8,9 @@ from models import User, Message, Tile, Character
 
 app = Flask(__name__)
 
+gameOver = False
+winner = 0
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
@@ -47,20 +50,25 @@ def interact():
         if thisuser != None:
             interactionX = -1;
             interactionY = -1;
-            if thisuser.direction == 1:
-                interactionX = int(thisuser.x/100)
-                interactionY = int((thisuser.y+20)/100)
-            elif thisuser.direction == 2:
-                interactionX = int((thisuser.x-20)/100)
-                interactionY = int(thisuser.y/100)
-            elif thisuser.direction == 3:
-                interactionX = int((thisuser.x+20)/100)
-                interactionY = int(thisuser.y/100)
-            elif thisuser.direction == 4:
-                interactionX = int(thisuser.x/100)
-                interactionY = int((thisuser.y-20)/100)
+            if thiseruser.character.name != 'HAL':
+                if thisuser.direction == 1:
+                    interactionX = int(thisuser.x/100)
+                    interactionY = int((thisuser.y+20)/100)
+                elif thisuser.direction == 2:
+                    interactionX = int((thisuser.x-20)/100)
+                    interactionY = int(thisuser.y/100)
+                elif thisuser.direction == 3:
+                    interactionX = int((thisuser.x+20)/100)
+                    interactionY = int(thisuser.y/100)
+                elif thisuser.direction == 4:
+                    interactionX = int(thisuser.x/100)
+                    interactionY = int((thisuser.y-20)/100)
+                else:
+                    return 'direction error'
             else:
-                return 'direction error'
+                interactionX = int(thisuser.x/100)
+                interactionY = int(thisuser.y/100)
+                thisuser.health -= 100
             tile = Tile.query.filter(Tile.x == interactionX, Tile.y == interactionY).first()
             if tile != None:
                 now = datetime.datetime.now()
@@ -113,9 +121,13 @@ def change_character():
     return redirect(url_for('index'))
 
 def update_frame():
-    users = User.query.all()
+    users = User.query.filter(User.health > 0, User.active_until > datetime.datetime.now(), User.character != None).all()
+    playersLiving = False
+    halLiving = False
     for user in users:
+        playersLiving = True
         if user.moving:
+            # Update user coords
             if user.direction == 1:
                 newY = user.y + user.character.speed
                 tile = Tile.query.filter(int((newY + 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
@@ -137,6 +149,11 @@ def update_frame():
                 tile = Tile.query.filter(int((newY - 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
                 if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
                     user.y = newY
+            # check for damage
+            tile = Tile.query.filter(Tile.x == int(user.x/100), Tile.y == int(user.y/100))
+            if tile != None:
+                if tile.tile_type == 7 and tile.status == 1:
+                    user.health -= 5
             db_session.commit()
     tiles = Tile.query.all()
     for tile in tiles:
@@ -148,35 +165,50 @@ def update_frame():
                 else:
                     tile.status = 0
                 db_session.commit()
+        if tile.tile_type == 1 and status == 1:
+            halLiving = True
+    if not halLiving or not playersLiving:
+        global gameOver
+        gameOver = True
+        global winner
+        if halLiving:
+            winner = 1
+        else:
+            winner = 2
 
 @app.route('/update')
 def update():
     if 'username' in session:
         last_update = request.args.get('last_update','')
         if last_update != '':
-            try:
-                last_datetime = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-                thisuser = User.query.filter(User.username == session['username']).first()
-                now = datetime.datetime.now()
-                thisuser.active_until = now + datetime.timedelta(seconds = 30)
-                db_session.commit()
-                new_messages = Message.query.filter(Message.created_at > last_datetime)
-                parsed_new_messages = []
-                for message in new_messages:
-                    parsed_new_messages.append(dict([("username", message.user.username), ("text", message.text), ("created_at", message.created_at.strftime('%Y-%m-%d %H:%M:%S'))]))
-                active_users = User.query.filter(User.active_until > datetime.datetime.now())
-                parsed_active_users = []
-                for user in active_users:
-                    parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
-                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
-                tiles = Tile.query.all()
-                parsed_tiles = []
-                for tile in tiles:
-                    parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
-                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser), ("tiles", parsed_tiles)])
+            if gameOver:
+                global winner
+                result = dict([("gameover", True), ("winner", winner)])
                 return json.dumps(result)
-            except ValueError:
-                return ""
+            else:
+                try:
+                    last_datetime = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+                    thisuser = User.query.filter(User.username == session['username']).first()
+                    now = datetime.datetime.now()
+                    thisuser.active_until = now + datetime.timedelta(seconds = 30)
+                    db_session.commit()
+                    new_messages = Message.query.filter(Message.created_at > last_datetime)
+                    parsed_new_messages = []
+                    for message in new_messages:
+                        parsed_new_messages.append(dict([("username", message.user.username), ("text", message.text), ("created_at", message.created_at.strftime('%Y-%m-%d %H:%M:%S'))]))
+                    active_users = User.query.filter(User.active_until > datetime.datetime.now())
+                    parsed_active_users = []
+                    for user in active_users:
+                        parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
+                    parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
+                    tiles = Tile.query.all()
+                    parsed_tiles = []
+                    for tile in tiles:
+                        parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
+                    result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser), ("tiles", parsed_tiles)])
+                    return json.dumps(result)
+                except ValueError:
+                    return ""
     return ""
 
 @app.route('/send_message')
