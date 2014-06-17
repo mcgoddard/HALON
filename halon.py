@@ -1,12 +1,18 @@
 from flask import Flask, render_template, request, redirect, escape, session, url_for, flash
 
-import database, hashlib, models, time, datetime, json
+import database, hashlib, models, time, datetime, json, sched, time, copy
+
+from threading import Timer
 
 from database import db_session
 
 from models import User, Message, Tile, Character
 
 app = Flask(__name__)
+
+timer = None
+update_result = dict()
+last_datetime = None
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -21,6 +27,10 @@ def index():
         thisuser.active_until = now + datetime.timedelta(seconds = 30)
         db_session.commit()
         active_users = User.query.filter(User.active_until > datetime.datetime.now())
+        global timer
+        if timer == None:
+            timer = Timer(1, update_frame)
+            timer.start()
         if thisuser.character != None:
             return render_template('play.html', name = session['username'], messages = messages, users = active_users, now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), thisuser = thisuser)
         else:
@@ -113,8 +123,12 @@ def change_character():
     return redirect(url_for('index'))
 
 def update_frame():
-    users = User.query.all()
+    # Update and parse active users
+    users = User.query.filter(User.active_until > datetime.datetime.now(), User.health > 0, User.character != None).all()
+    parsed_active_users = []
+    gameRunning = False
     for user in users:
+        gameRunning = True
         if user.moving:
             if user.direction == 1:
                 newY = user.y + user.character.speed
@@ -138,7 +152,10 @@ def update_frame():
                 if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
                     user.y = newY
             db_session.commit()
+        parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
+    # Update and parse tiles
     tiles = Tile.query.all()
+    parsed_tiles = []
     for tile in tiles:
         if tile.next_change != None:
             if tile.next_change < datetime.datetime.now():
@@ -148,6 +165,23 @@ def update_frame():
                 else:
                     tile.status = 0
                 db_session.commit()
+        parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
+    # Retrieve and parse messages
+    global last_datetime
+    if last_datetime != None:
+        new_messages = Message.query.filter(Message.created_at > last_datetime)
+    else:
+        new_messages = Message.query.all()
+    parsed_new_messages = []
+    for message in new_messages:
+        parsed_new_messages.append(dict([("username", message.user.username), ("text", message.text), ("created_at", message.created_at.strftime('%Y-%m-%d %H:%M:%S'))]))
+    # Update globals
+    global timer
+    global update_result
+    update_result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("tiles", parsed_tiles)])
+    if gameRunning:
+        timer = Timer(0.1, update_frame)
+        timer.start()
 
 @app.route('/update')
 def update():
@@ -160,21 +194,12 @@ def update():
                 now = datetime.datetime.now()
                 thisuser.active_until = now + datetime.timedelta(seconds = 30)
                 db_session.commit()
-                new_messages = Message.query.filter(Message.created_at > last_datetime)
-                parsed_new_messages = []
-                for message in new_messages:
-                    parsed_new_messages.append(dict([("username", message.user.username), ("text", message.text), ("created_at", message.created_at.strftime('%Y-%m-%d %H:%M:%S'))]))
-                active_users = User.query.filter(User.active_until > datetime.datetime.now())
-                parsed_active_users = []
-                for user in active_users:
-                    parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
+                global update_result
+                local_update_result = copy.deepcopy(update_result)
+                # Retrieve and parse this user
                 parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
-                tiles = Tile.query.all()
-                parsed_tiles = []
-                for tile in tiles:
-                    parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
-                result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("thisuser", parsed_thisuser), ("tiles", parsed_tiles)])
-                return json.dumps(result)
+                local_update_result['thisuser'] = parsed_thisuser
+                return json.dumps(local_update_result)
             except ValueError:
                 return ""
     return ""

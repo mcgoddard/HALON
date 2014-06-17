@@ -28,6 +28,81 @@
 		if ( event.which == 13 ) {
 			sendMessage();
 		}
+		else if (event.which == 87) {
+			$.ajax({
+			  url: "{{ url_for('move') }}?direction="+4,
+			  success:function(result){
+			  },
+			  error: function(xhr, textStatus, errorThrown){
+			  	if(!$('#connection-flash')) {
+				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+				      	"Connection lost, attempting to re-establish!"+
+				      "</div>");
+				}
+			  }
+			  });
+		}
+		else if (event.which == 83) {
+			$.ajax({
+			  url: "{{ url_for('move') }}?direction="+1,
+			  success:function(result){
+			  },
+			  error: function(xhr, textStatus, errorThrown){
+			  	if(!$('#connection-flash')) {
+				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+				      	"Connection lost, attempting to re-establish!"+
+				      "</div>");
+				}
+			  }
+			  });
+		}
+		else if (event.which == 65) {
+			$.ajax({
+			  url: "{{ url_for('move') }}?direction="+2,
+			  success:function(result){
+			  },
+			  error: function(xhr, textStatus, errorThrown){
+			  	if(!$('#connection-flash')) {
+				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+				      	"Connection lost, attempting to re-establish!"+
+				      "</div>");
+				}
+			  }
+			  });
+		}
+		else if (event.which == 68) {
+			$.ajax({
+			  url: "{{ url_for('move') }}?direction="+3,
+			  success:function(result){
+			  },
+			  error: function(xhr, textStatus, errorThrown){
+			  	if(!$('#connection-flash')) {
+				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+				      	"Connection lost, attempting to re-establish!"+
+				      "</div>");
+				}
+			  }
+			  });
+		}
+		else if (event.which == 32) {
+			$.ajax({
+			  url: "{{ url_for('interact') }}",
+			  success:function(result){
+			  },
+			  error: function(xhr, textStatus, errorThrown){
+			  	if(!$('#connection-flash')) {
+				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+				      	"Connection lost, attempting to re-establish!"+
+				      "</div>");
+				}
+			  }
+			  });
+		}
 	});
 	$('#messages-box').scrollTop(999999);
 	function update() {
@@ -35,6 +110,7 @@
 		  url: "{{ url_for('update') }}?last_update="+last_update,
 		  dataType: "json",
 		  success:function(result){
+			console.log(result)
 		    var scrollHeight = $('#messages-box')[0].scrollHeight;
 		    var scrollTop = $('#messages-box').scrollTop();
 		    var height = $('#messages-box').height();
@@ -74,7 +150,7 @@
 		  }
 		  });
 	}
-	window.setInterval(update, 5000);
+	window.setInterval(update, 100);
 	function sendMessage() {
 		var message = $('#message-field').val();
 		$('#message-field').val('');
