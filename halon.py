@@ -13,6 +13,8 @@ app = Flask(__name__)
 timer = None
 update_result = dict()
 last_datetime = None
+gameOver = False
+winner = 0
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -57,20 +59,25 @@ def interact():
         if thisuser != None:
             interactionX = -1;
             interactionY = -1;
-            if thisuser.direction == 1:
-                interactionX = int(thisuser.x/100)
-                interactionY = int((thisuser.y+20)/100)
-            elif thisuser.direction == 2:
-                interactionX = int((thisuser.x-20)/100)
-                interactionY = int(thisuser.y/100)
-            elif thisuser.direction == 3:
-                interactionX = int((thisuser.x+20)/100)
-                interactionY = int(thisuser.y/100)
-            elif thisuser.direction == 4:
-                interactionX = int(thisuser.x/100)
-                interactionY = int((thisuser.y-20)/100)
+            if thiseruser.character.name != 'HAL':
+                if thisuser.direction == 1:
+                    interactionX = int(thisuser.x/100)
+                    interactionY = int((thisuser.y+20)/100)
+                elif thisuser.direction == 2:
+                    interactionX = int((thisuser.x-20)/100)
+                    interactionY = int(thisuser.y/100)
+                elif thisuser.direction == 3:
+                    interactionX = int((thisuser.x+20)/100)
+                    interactionY = int(thisuser.y/100)
+                elif thisuser.direction == 4:
+                    interactionX = int(thisuser.x/100)
+                    interactionY = int((thisuser.y-20)/100)
+                else:
+                    return 'direction error'
             else:
-                return 'direction error'
+                interactionX = int(thisuser.x/100)
+                interactionY = int(thisuser.y/100)
+                thisuser.health -= 100
             tile = Tile.query.filter(Tile.x == interactionX, Tile.y == interactionY).first()
             if tile != None:
                 now = datetime.datetime.now()
@@ -124,16 +131,18 @@ def change_character():
 
 def update_frame():
     # Update and parse active users
-    users = User.query.filter(User.active_until > datetime.datetime.now(), User.health > 0, User.character != None).all()
+    users = User.query.filter(User.health > 0, User.active_until > datetime.datetime.now(), User.character != None).all()
     parsed_active_users = []
-    gameRunning = False
+    playersLiving = False
+    halLiving = False
     for user in users:
-        gameRunning = True
+        playersLiving = True
         if user.moving:
+            # Update user coords
             if user.direction == 1:
                 newY = user.y + user.character.speed
                 tile = Tile.query.filter(int((newY + 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
-                if int((newY + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                if int((newY + 16)/100) < 2 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
                     user.y = newY
             elif user.direction == 2:
                 newX = user.x - user.character.speed
@@ -143,7 +152,7 @@ def update_frame():
             elif user.direction == 3:
                 newX = user.x + user.character.speed
                 tile = Tile.query.filter(int((newX + 16)/100) == Tile.x, int(user.y/100) == Tile.y).first()
-                if int((newX + 16)/100) < 10 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
+                if int((newX + 16)/100) < 2 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
                     user.x = newX
                 user.x += user.character.speed
             elif user.direction == 4:
@@ -151,6 +160,11 @@ def update_frame():
                 tile = Tile.query.filter(int((newY - 16)/100) == Tile.y, int(user.x/100) == Tile.x).first()
                 if int((newY - 16)/100) >= 0 and tile != None and (tile.tile_type > 5 or (tile.tile_type == 4 and tile.status == 0)):
                     user.y = newY
+            # check for damage
+            tile = Tile.query.filter(Tile.x == int(user.x/100), Tile.y == int(user.y/100)).first()
+            if tile != None:
+                if tile.tile_type == 7 and tile.status == 1:
+                    user.health -= 5
             db_session.commit()
         parsed_active_users.append(dict([("username", user.username), ("x", user.x), ("y", user.y), ("direction", user.direction), ("moving", user.moving), ("character_id", user.character_id)]))
     # Update and parse tiles
@@ -166,6 +180,8 @@ def update_frame():
                     tile.status = 0
                 db_session.commit()
         parsed_tiles.append(dict([("x", tile.x), ("y", tile.y), ("tile_type", tile.tile_type), ("status", tile.status)]))
+        if tile.tile_type == 1 and status == 1:
+            halLiving = True
     # Retrieve and parse messages
     global last_datetime
     if last_datetime != None:
@@ -179,8 +195,17 @@ def update_frame():
     global timer
     global update_result
     update_result = dict([("new_messages", parsed_new_messages), ("active_users", parsed_active_users), ("last_updated", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ("tiles", parsed_tiles)])
-    if gameRunning:
-        timer = Timer(0.1, update_frame)
+    # Check for gameover and reset game loop
+    global gameOver
+    if (not halLiving or not playersLiving) and len(users) >= 2:
+        gameOver = True
+        global winner
+        if halLiving:
+            winner = 1
+        elif playersLiving:
+            winner = 2
+    if not gameOver:
+        timer = Timer(0.2, update_frame)
         timer.start()
 
 @app.route('/update')
@@ -188,20 +213,25 @@ def update():
     if 'username' in session:
         last_update = request.args.get('last_update','')
         if last_update != '':
-            try:
-                last_datetime = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-                thisuser = User.query.filter(User.username == session['username']).first()
-                now = datetime.datetime.now()
-                thisuser.active_until = now + datetime.timedelta(seconds = 30)
-                db_session.commit()
-                global update_result
-                local_update_result = copy.deepcopy(update_result)
-                # Retrieve and parse this user
-                parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
-                local_update_result['thisuser'] = parsed_thisuser
-                return json.dumps(local_update_result)
-            except ValueError:
-                return ""
+            if gameOver:
+                global winner
+                result = dict([("gameover", True), ("winner", winner)])
+                return json.dumps(result)
+            else:
+                try:
+                    last_datetime = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+                    thisuser = User.query.filter(User.username == session['username']).first()
+                    now = datetime.datetime.now()
+                    thisuser.active_until = now + datetime.timedelta(seconds = 30)
+                    db_session.commit()
+                    global update_result
+                    local_update_result = copy.deepcopy(update_result)
+                    # Retrieve and parse this user
+                    parsed_thisuser = dict([("username", thisuser.username), ("direction", thisuser.direction), ("x", thisuser.x), ("y", thisuser.y), ("health", thisuser.health), ("moving", thisuser.moving), ("character_id", thisuser.character_id), ("max_health", thisuser.character.max_health), ("character_name", thisuser.character.name)])
+                    local_update_result['thisuser'] = parsed_thisuser
+                    return json.dumps(local_update_result)
+                except ValueError:
+                    return ""
     return ""
 
 @app.route('/send_message')

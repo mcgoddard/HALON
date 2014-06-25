@@ -14,6 +14,83 @@
 	</div>
 </row>
 <script type="text/javascript">
+$('#render-window').keydown( function(event) {
+	if (event.which == 87) {
+		$.ajax({
+		  url: "{{ url_for('move') }}?direction="+4,
+		  success:function(result){
+		  },
+		  error: function(xhr, textStatus, errorThrown){
+		  	if(!$('#connection-flash')) {
+			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+			      	"Connection lost, attempting to re-establish!"+
+			      "</div>");
+			}
+		  }
+		  });
+	}
+	else if (event.which == 83) {
+		$.ajax({
+		  url: "{{ url_for('move') }}?direction="+1,
+		  success:function(result){
+		  },
+		  error: function(xhr, textStatus, errorThrown){
+		  	if(!$('#connection-flash')) {
+			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+			      	"Connection lost, attempting to re-establish!"+
+			      "</div>");
+			}
+		  }
+		  });
+	}
+	else if (event.which == 65) {
+		$.ajax({
+		  url: "{{ url_for('move') }}?direction="+2,
+		  success:function(result){
+		  },
+		  error: function(xhr, textStatus, errorThrown){
+		  	if(!$('#connection-flash')) {
+			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+			      	"Connection lost, attempting to re-establish!"+
+			      "</div>");
+			}
+		  }
+		  });
+	}
+	else if (event.which == 68) {
+		$.ajax({
+		  url: "{{ url_for('move') }}?direction="+3,
+		  success:function(result){
+		  },
+		  error: function(xhr, textStatus, errorThrown){
+		  	if(!$('#connection-flash')) {
+			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+			      	"Connection lost, attempting to re-establish!"+
+			      "</div>");
+			}
+		  }
+		  });
+	}
+	else if (event.which == 32) {
+		$.ajax({
+		  url: "{{ url_for('interact') }}",
+		  success:function(result){
+		  },
+		  error: function(xhr, textStatus, errorThrown){
+		  	if(!$('#connection-flash')) {
+			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
+			      	"Connection lost, attempting to re-establish!"+
+			      "</div>");
+			}
+		  }
+		  });
+	}
+});
 function update_game(result) {
 	// Update HUD
 	$('#hud').width(Math.ceil((result['thisuser']['health']/(result['thisuser']['max_health']*1.0))*700));
@@ -35,7 +112,11 @@ function update_game(result) {
 			$('#render-window').append("<img src='{{ url_for('static', filename='img/tile-') }}"+tile['tile_type']+"-"+tile['status']+".gif' alt='tile' class='tile' style='top:"+renderY+"px;left:"+renderX+"px;'/>");
 		} 
 	}
-	// Render character
+	// Render other players
+	for (i = 0; i < result['active_users'].length; i++) {
+		
+	}
+	// Render player
 	s = "";
 	if (!result['thisuser']['moving']) {
 		s = "s";

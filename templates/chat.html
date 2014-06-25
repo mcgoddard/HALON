@@ -28,81 +28,6 @@
 		if ( event.which == 13 ) {
 			sendMessage();
 		}
-		else if (event.which == 87) {
-			$.ajax({
-			  url: "{{ url_for('move') }}?direction="+4,
-			  success:function(result){
-			  },
-			  error: function(xhr, textStatus, errorThrown){
-			  	if(!$('#connection-flash')) {
-				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
-				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
-				      	"Connection lost, attempting to re-establish!"+
-				      "</div>");
-				}
-			  }
-			  });
-		}
-		else if (event.which == 83) {
-			$.ajax({
-			  url: "{{ url_for('move') }}?direction="+1,
-			  success:function(result){
-			  },
-			  error: function(xhr, textStatus, errorThrown){
-			  	if(!$('#connection-flash')) {
-				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
-				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
-				      	"Connection lost, attempting to re-establish!"+
-				      "</div>");
-				}
-			  }
-			  });
-		}
-		else if (event.which == 65) {
-			$.ajax({
-			  url: "{{ url_for('move') }}?direction="+2,
-			  success:function(result){
-			  },
-			  error: function(xhr, textStatus, errorThrown){
-			  	if(!$('#connection-flash')) {
-				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
-				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
-				      	"Connection lost, attempting to re-establish!"+
-				      "</div>");
-				}
-			  }
-			  });
-		}
-		else if (event.which == 68) {
-			$.ajax({
-			  url: "{{ url_for('move') }}?direction="+3,
-			  success:function(result){
-			  },
-			  error: function(xhr, textStatus, errorThrown){
-			  	if(!$('#connection-flash')) {
-				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
-				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
-				      	"Connection lost, attempting to re-establish!"+
-				      "</div>");
-				}
-			  }
-			  });
-		}
-		else if (event.which == 32) {
-			$.ajax({
-			  url: "{{ url_for('interact') }}",
-			  success:function(result){
-			  },
-			  error: function(xhr, textStatus, errorThrown){
-			  	if(!$('#connection-flash')) {
-				    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
-				      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
-				      	"Connection lost, attempting to re-establish!"+
-				      "</div>");
-				}
-			  }
-			  });
-		}
 	});
 	$('#messages-box').scrollTop(999999);
 	function update() {
@@ -110,47 +35,51 @@
 		  url: "{{ url_for('update') }}?last_update="+last_update,
 		  dataType: "json",
 		  success:function(result){
-			console.log(result)
-		    var scrollHeight = $('#messages-box')[0].scrollHeight;
-		    var scrollTop = $('#messages-box').scrollTop();
-		    var height = $('#messages-box').height();
-		    var moveDown = false;
-		    if (scrollTop + height == scrollHeight) {
-		    	moveDown = true;
-		    }
-		  	$('#connection-flash').remove();
 		  	last_result = result;
-		    for(i = 0; i < result['new_messages'].length; i++) {
-		    	var message = result['new_messages'][i];
-		    	$('#messages-box').append("<p class='chat'><strong>"+message['username']+":</strong> "+message['text']+"</p>"+
-					"<p class='timestamp'><i>"+message['created_at']+"</i></p>");
-				document.title = "New Message! - HALON";
-		    }
-		    var new_active_users = "";
-		    for (i = 0; i < result['active_users'].length; i++) {
-		    	new_active_users += "<p class='user'>"+result['active_users'][i]['username']+"</p>";
-		    }
-		    $('#users-box').empty().append(new_active_users);
-		    if (moveDown) {
-		    	$('#messages-box').scrollTop(999999);
-		    }
-		    last_update = result['last_updated'];
-		    // Update HUD and game if playing
-		    if (typeof(playing) != "undefined" && playing) {
-		    	update_game(result);
-		    }
+		  	if (typeof(result['gameover']) != "undefined") {
+		  		$('#render-window').empty().append("<img alt='Game Over' src='{{ url_for('static', filename='img/gameover-') }}"+result['winner']+".gif' />");
+		  	}
+		  	else {
+			    var scrollHeight = $('#messages-box')[0].scrollHeight;
+			    var scrollTop = $('#messages-box').scrollTop();
+			    var height = $('#messages-box').height();
+			    var moveDown = false;
+			    if (scrollTop + height == scrollHeight) {
+			    	moveDown = true;
+			    }
+			  	$('#connection-flash').remove();
+			    for(i = 0; i < result['new_messages'].length; i++) {
+			    	var message = result['new_messages'][i];
+			    	$('#messages-box').append("<p class='chat'><strong>"+message['username']+":</strong> "+message['text']+"</p>"+
+						"<p class='timestamp'><i>"+message['created_at']+"</i></p>");
+					document.title = "New Message! - HALON";
+			    }
+			    var new_active_users = "";
+			    for (i = 0; i < result['active_users'].length; i++) {
+			    	new_active_users += "<p class='user'>"+result['active_users'][i]['username']+"</p>";
+			    }
+			    $('#users-box').empty().append(new_active_users);
+			    if (moveDown) {
+			    	$('#messages-box').scrollTop(999999);
+			    }
+			    last_update = result['last_updated'];
+			    // Update HUD and game if playing
+			    if (typeof(playing) != "undefined" && playing) {
+			    	update_game(result);
+			    }
+			}
 		  },
 		  error: function(xhr, textStatus, errorThrown){
-		  	if(!$('#connection-flash')) {
-			    $("#flashes-area").append("<div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
+		  	if(!$('#connection-flash')[0]) {
+			    $(".container").append("<div id='flashes-area' class='flashes'><div id='connection-flash' class='alert alert-warning alert-dismissable'>"+
 			      	"<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button>"+
 			      	"Connection lost, attempting to re-establish!"+
-			      "</div>");
+			      "</div></div>");
 			}
 		  }
 		  });
 	}
-	window.setInterval(update, 100);
+	window.setInterval(update, 200);
 	function sendMessage() {
 		var message = $('#message-field').val();
 		$('#message-field').val('');
